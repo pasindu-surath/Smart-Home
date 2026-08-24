@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Home Dashboard</title>
+
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Firebase CDN -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+    // =====================================================
+    // YOUR FIREBASE WEB CONFIG
+    // =====================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyBknnhznrjjmUyTKxjylUvyJGAQFudcibk",
+      authDomain: "smart-home-iot-9226f.firebaseapp.com",
+      databaseURL: "https://smart-home-iot-9226f-default-rtdb.firebaseio.com",
+      projectId: "smart-home-iot-9226f",
+      storageBucket: "smart-home-iot-9226f.firebasestorage.app",
+      messagingSenderId: "833923559172",
+      appId: "1:833923559172:web:7e2d551829a480661e6a51",
+      measurementId: "G-40GZZ9RQH2"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const smartHomeRef = ref(db, "smartHome");
+
+    // Connection status eka console eke pennanna
+    const connectedRef = ref(db, ".info/connected");
+    onValue(connectedRef, (snap) => {
+      if (snap.val() === true) {
+        console.log("🟢 Firebase Connected Succesfull");
+      } else {
+        console.log("🔴 Firebase Disconnected");
+      }
+    });
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+    }
+
+    function setStatus(id, text, active) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      if (active) {
+        el.classList.remove("bg-success");
+        el.classList.add("bg-danger");
+      } else {
+        el.classList.remove("bg-danger");
+        el.classList.add("bg-success");
+      }
+    }
+
+    onValue(smartHomeRef, (snapshot) => {
+      const data = snapshot.val() || {};
+
+      const temperature = Number(data.temperature);
+      const humidity = Number(data.humidity);
+      const gas = Number(data.gas);
+
+      setText("temperature", Number.isFinite(temperature) ? temperature.toFixed(1) + " °C" : "--");
+      setText("humidity", Number.isFinite(humidity) ? humidity.toFixed(1) + " %" : "--");
+      setText("gas", Number.isFinite(gas) ? String(Math.round(gas)) : "--");
+
+      const laserAlert = data.securityAlert === true || data.laser === "ALERT";
+      const gasAlert = data.gasAlert === true;
+
+      setStatus("laserStatus", laserAlert ? "⚠ LASER ALERT" : "✓ SAFE", laserAlert);
+      setStatus("gasStatus", gasAlert ? "⚠ GAS / SMOKE ALERT" : "✓ NORMAL", gasAlert);
+
+      const overall = document.getElementById("overallStatus");
+
+      if (laserAlert || gasAlert) {
+        overall.textContent = "⚠ WARNING";
+        overall.className = "alert alert-danger d-inline-block fw-bold shadow-sm px-4 py-2 mt-3";
+      } else {
+        overall.textContent = "✓ SYSTEM NORMAL";
+        overall.className = "alert alert-success d-inline-block fw-bold shadow-sm px-4 py-2 mt-3";
+      }
+
+      const now = new Date();
+      setText("lastSeen", "Updated: " + now.toLocaleTimeString());
+    }, (error) => {
+      console.error(error);
+      setText("lastSeen", "Firebase connection error");
+    });
+  </script>
+</head>
+
+<body class="bg-light">
+  <main class="container py-5">
+
+    <!-- Header Section -->
+    <header class="text-center mb-5">
+      <p class="text-primary fw-bold small text-uppercase mb-1">WD 32</p>
+      <h1 class="display-5 fw-bold text-dark mb-3">Smart Home Dashboard</h1>
+      <p class="lead text-secondary">Live temperature, humidity, gas and laser security monitoring.</p>
+      
+      <div id="overallStatus" class="alert alert-success d-inline-block fw-bold shadow-sm px-4 py-2 mt-3">
+        ✓ SYSTEM NORMAL
+      </div>
+      <p id="lastSeen" class="text-muted small mt-2">Waiting for data...</p>
+    </header>
+
+    <!-- Cards Section using Bootstrap Grid -->
+    <section class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 justify-content-center mb-5">
+      
+      <div class="col">
+        <article class="card h-100 shadow-sm text-center border-0">
+          <div class="card-body py-4">
+            <div class="display-4 mb-2">🌡️</div>
+            <h2 class="h5 text-muted">Temperature</h2>
+            <div id="temperature" class="display-6 fw-bold text-dark mt-3">--</div>
+          </div>
+        </article>
+      </div>
+
+      <div class="col">
+        <article class="card h-100 shadow-sm text-center border-0">
+          <div class="card-body py-4">
+            <div class="display-4 mb-2">💧</div>
+            <h2 class="h5 text-muted">Humidity</h2>
+            <div id="humidity" class="display-6 fw-bold text-dark mt-3">--</div>
+          </div>
+        </article>
+      </div>
+
+      <div class="col">
+        <article class="card h-100 shadow-sm text-center border-0">
+          <div class="card-body py-4">
+            <div class="display-4 mb-2">💨</div>
+            <h2 class="h5 text-muted">Gas Level</h2>
+            <div id="gas" class="display-6 fw-bold text-dark mt-3">--</div>
+          </div>
+        </article>
+      </div>
+
+      <div class="col">
+        <article class="card h-100 shadow-sm text-center border-0">
+          <div class="card-body py-4">
+            <div class="display-4 mb-2">🔴</div>
+            <h2 class="h5 text-muted">Laser Security</h2>
+            <div class="mt-4">
+              <span id="laserStatus" class="badge bg-success fs-6 py-2 px-3 shadow-sm">✓ SAFE</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="col">
+        <article class="card h-100 shadow-sm text-center border-0">
+          <div class="card-body py-4">
+            <div class="display-4 mb-2">🔥</div>
+            <h2 class="h5 text-muted">Gas / Smoke</h2>
+            <div class="mt-4">
+              <span id="gasStatus" class="badge bg-success fs-6 py-2 px-3 shadow-sm">✓ NORMAL</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+    </section>
+
+    <!-- Info Section -->
+    <section class="bg-white p-4 p-md-5 rounded shadow-sm text-center max-w-lg mx-auto">
+      <h2 class="h4 fw-bold text-dark mb-3">How it works</h2>
+      <p class="text-secondary mb-0">
+        The ESP32 reads the DHT11, MQ-2 and LDR sensors and sends the live values
+        to Firebase Realtime Database. This dashboard listens to Firebase and
+        updates automatically without refreshing the page.
+      </p>
+    </section>
+
+    <!-- Footer -->
+    <footer class="mt-5 text-center">
+      <p class="text-muted small">Smart Home IoT Project • ESP32 • Firebase</p>
+    </footer>
+
+  </main>
+</body>
+</html>
