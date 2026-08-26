@@ -12,11 +12,6 @@ A comprehensive, real-time Smart Home IoT system built with ESP32 and Firebase. 
 
 * **Live Web Dashboard:** [Click here to view the live dashboard](https://pasindu-surath.github.io/Smart-Home/)
 
-**Project Demo Video:**
-
-<video src="video/project.mp4" width="100%" controls></video>
-
-> **Note:** If your video file has a different name, make sure to change `demo_video.mp4` in the code above to match your actual file name (e.g., `my_project.mp4`).
 
 ---
 
